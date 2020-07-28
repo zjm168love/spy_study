@@ -2,17 +2,22 @@
 # Anchor extraction from HTML document
 # import os
 # os.environ["HTTPS_PROXY"] = "http://username:password@your-corporate-proxy.com:port"
+import ssl
 import time
 import urllib
+from urllib.request import Request, urlopen
 
 from bs4 import BeautifulSoup
-from urllib.request import Request, urlopen, urlretrieve
-import ssl
 
-if __name__ == "__main__":
-    ssl._create_default_https_context = ssl._create_unverified_context
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
-    url = "https://bing.ioliu.cn/"
+
+def reqAndRetrieve(baseUrl, pageNumber):
+    # 分页判断
+    if pageNumber == 1:
+        url = baseUrl
+    else:
+        url = baseUrl + '?p=' + str(pageNumber)
+
+    print('base request url:' + url)
     req = Request(url=url, headers=headers)
     html = urlopen(req)
     bs = BeautifulSoup(html.read(), 'html.parser')
@@ -21,31 +26,45 @@ if __name__ == "__main__":
     # divContainer.find_children()
     # items = bs.find_all("div", class_="item")
 
-    originUrlList = []
-    for div in divContainers:
-        for item in div.find_all("div", class_="item"):
-            pic_url = item.find("a").attrs["href"]
-            originUrlList.append(pic_url)
+    picUrlList = getPicUrlLists(divContainers)
 
-    print(originUrlList)
+    _retrieve(picUrlList)
 
-    urlList = []
-    for url in originUrlList:
-        urlList.append(url[6:-13])
 
-    for url in urlList:
+def _retrieve(picUrlList):
+    for url in picUrlList:
         filename = url[7:-13]
         picUrl = "http://h1.ioliu.cn/bing" + url + "_1920x1080.jpg?imageslim"
 
         opener = urllib.request.URLopener()
         opener.addheader('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0')
-        opener.retrieve(picUrl, '/Users/pepchou/Desktop/study/架构师/python/soup/' + filename+".jpg")
+        opener.retrieve(picUrl, '/Users/pepchou/Desktop/study/架构师/python/soup/' + filename + ".jpg")
         time.sleep(1)
 
 
+def getPicUrlLists(divContainersHtml):
+    originUrlList = []
+    for div in divContainersHtml:
+        for item in div.find_all("div", class_="item"):
+            pic_url = item.find("a").attrs["href"]
+            originUrlList.append(pic_url)
+    print(originUrlList)
+    urlList = []
+    for url in originUrlList:
+        urlList.append(url[6:-13])
+    return urlList
 
-    https://bing.ioliu.cn/?p=2
-        # print(filename)
-# for link in tagAList:
-#     print(link.get('src'))
-# print(tagAList)
+
+if __name__ == "__main__":
+    ssl._create_default_https_context = ssl._create_unverified_context
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+
+    pageNumber = 1
+    totalPageNumber = 5
+    baseUrl = "https://bing.ioliu.cn/"
+    while pageNumber <= totalPageNumber:
+        reqAndRetrieve(baseUrl, pageNumber)
+        pageNumber = pageNumber + 1
+
+    print('total pageNumber:' + str(pageNumber))
+    print('completed')
