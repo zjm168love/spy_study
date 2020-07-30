@@ -2,6 +2,7 @@
 # Anchor extraction from HTML document
 # import os
 # os.environ["HTTPS_PROXY"] = "http://username:password@your-corporate-proxy.com:port"
+import re
 import ssl
 import time
 import urllib
@@ -50,21 +51,30 @@ def getPicUrlLists(divContainersHtml):
             originUrlList.append(pic_url)
     print(originUrlList)
     urlList = []
+
     for url in originUrlList:
-        urlList.append(url[6:-13])
+        # urlList.append(url[6:-13])
+        urlList.append(
+            re.match('([a-zA-Z0-9_^.!-/]*)\?', url).group()[6:-1]
+        )
     return urlList
 
 
 if __name__ == "__main__":
     ssl._create_default_https_context = ssl._create_unverified_context
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+    # str = re.match('([a-zA-Z0-9_^.!-]*)\?', "shshshshsh?234")
+    # print(str.group())
 
     pageNumber = 1
     totalPageNumber = 5
-    baseUrl = "https://bing.ioliu.cn/"
+    # baseUrl = "https://bing.ioliu.cn/"
+    rankingUrl = "https://bing.ioliu.cn/ranking"
     while pageNumber <= totalPageNumber:
-        reqAndRetrieve(baseUrl, pageNumber)
+        reqAndRetrieve(rankingUrl, pageNumber)
         pageNumber = pageNumber + 1
 
     print('total pageNumber:' + str(pageNumber))
     print('completed')
+
+    # .group()[:-1]
